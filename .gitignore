@@ -1,0 +1,7 @@
+*
+!.gitignore
+!vgm-player
+!vgm-player.1
+!vgmplay.1
+!README.md
+!Makefile
