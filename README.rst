@@ -64,11 +64,11 @@ are exclusive:
               emulation modules, or the OSSProxy.
 
 -p, --pulse   ``padsp`` wrapper for PulseAudio; respects the PULSE_SERVER
-              environment variable if set.  Sets stream role to music.
+              environment variable if set.
 
 --pulse-server=server
               ``padsp`` wrapper for PulseAudio; forces output to specified
-              PulseAudio server.  Sets stream role to music.
+              PulseAudio server.
 
 -l, --log     Outputs to .WAV in current directory.
 

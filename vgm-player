@@ -1,0 +1,53 @@
+#!/bin/sh
+
+_force_output=
+_pulse_server=      # Used when --pulse-server= is called
+
+_help () {
+}
+
+_to_stderr () {
+    echo "$0: $2" 1>&2
+    exit $1
+}
+
+_die () {
+    case $1 in
+        too_many_outputs )
+            _to_stderr 64 "can only force one output type" ;;
+		no_pulse_server )
+			_to_stderr 64 "--pulse-server requires server parameter" ;;
+    esac
+}
+
+_force_output () {
+    [ $_force_output ] && _die too_many_outputs
+    $_force_output=$1
+}
+
+_xdg_basedirs () {
+}
+# Parse Arguments
+while :; do
+    case $1 in
+        --help )
+            _help ;;
+        --version )
+            echo "VGMPlay 0.40.3 supporting VGM 1.70"
+            exit 0 ;;
+        -a | --alsa )
+            _force_output alsa
+			shift ;;
+        -o | --oss )
+            _force_output oss
+			shift ;;
+        -p | --pulse )
+            _force_output pulse
+			shift ;;
+        --pulse-server=* )
+            _pulse_server="${1#*=}"
+            [ -z "$_pulse_server" ] && _die no_pulse_server ;;
+    esac
+done
+# Select Working Directory
+
