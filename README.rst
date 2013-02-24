@@ -5,9 +5,8 @@ vgm-player
 A Linux launcher script for ``vgmplay``, the official and always up-to-date
 VGM player (also some manpages and a new Makefile)
 
-This is intended to be used in conjunction with the official source for
-``vgmplay``, available at http://vgm.mdscene.net/forum/viewtopic.php?t=112,
-with the goal of eventually being made part of that distribution.
+This is intended to be used alongside the official source for
+``vgmplay``, available at http://vgm.mdscene.net/forum/viewtopic.php?t=112.
 
 Build
 =====
@@ -50,7 +49,7 @@ the proper OSS wrapper for your system in the following order and criteria:
 
 1. PULSE_SERVER is set: ``padsp`` wrapper for PulseAudio used and stream sent
    to $PULSE_SERVER.
-2. ``/dev/dsp`` exists: Implies ALSA's OSS emulation modules, ``ossp``, or
+2. ``/dev/dsp`` exists: Implies ALSA's OSS emulation modules, OSSProxy, or
    OSS running - uses plain OSS output
 3. PulseAudio daemon running: ``padsp`` wrapper for PulseAudio used
 4. ``aoss`` present: ``aoss`` wrapper for ALSA used
@@ -62,7 +61,7 @@ are exclusive:
 -a, --alsa    ``aoss`` wrapper for ALSA.
 
 -o, --oss     ``oss`` output, for use with actual OSS, ALSA's OSS
-              emulation modules, or the ``ossp`` emulation daemon.
+              emulation modules, or the OSSProxy.
 
 -p, --pulse   ``padsp`` wrapper for PulseAudio; respects the PULSE_SERVER
               environment variable if set.  Sets stream role to music.
@@ -79,23 +78,23 @@ are exclusive:
 Configuration
 ~~~~~~~~~~~~~
 
-``vgmplay`` expects ``VGMPlay.ini`` in its working directory; ``vgm-player``
-will look for a custom ``VGMPlay.ini`` in the following order and use the
+``vgmplay`` expects ``vgmplay.ini`` in its working directory; ``vgm-player``
+will look for a custom ``vgmplay.ini`` in the following order and use the
 first found:
-``$XDG_CONFIG_HOME/vgm-player/VGMPlay.ini``,
-``$HOME/.config/vgm-player/VGMPlay.ini``,
-``$XDG_CONFIG_DIRS/vgm-player/VGMPlay.ini``,
-``/etc/xdg/vgm-player/VGMPlay.ini``.
+``$XDG_CONFIG_HOME/vgm-player/vgmplay.ini``,
+``$HOME/.config/vgm-player/vgmplay.ini``,
+``$XDG_CONFIG_DIRS/vgm-player/vgmplay.ini``,
+``/etc/xdg/vgm-player/vgmplay.ini``.
 
 --config=configfile
               Uses specified configuration file; this does not have to be
-              named ``VGMPlay.ini``
+              named ``vgmplay.ini``
 
 --binary=binary
               Uses specified ``vgmplay`` binary
 
 --override=options
-              Overrides options from the [General] section of ``VGMPlay.ini``.
+              Overrides options from the [General] section of ``vgmplay.ini``.
               The list should be quoted and comma-separated, e.g.
               ``--override="SampleRate = 22050,MaxLoops = 0x03"``
 
