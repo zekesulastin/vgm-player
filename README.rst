@@ -12,21 +12,22 @@ with the goal of eventually being made part of that distribution.
 Build
 =====
 
-1. Ensure ``zlib``'s development headers are available.
+1. Ensure ``zlib``'s development headers are available
 2. Acquire and extract the source of ``vgmplay`` - if it already has all the
-files listed here, just build and play!
+   files listed here, just build and play
 3. Place all files from here into ``vgmplay``'s directory; the only overwrite
-should be the Makefile.
+   should be the Makefile
 4. Build and install::
-  $ make
-  # make install
 
-By default, ``vgmplay`` and ``vgm-player`` install into /usr/local; to alter
-this, install with ``make PREFIX=/your/favorite/path install``.  If you know
-your system lacks support for hardware emulation of FM chips or get a build
-error to the effect of "sys/io.h missing", invoke ``make`` as
-``CFLAGS=-DDISABLE_HW_SUPPORT make``.
-5. Play music!
+      $ make
+      # make install
+
+   By default, ``vgmplay`` and ``vgm-player`` install into /usr/local; to alter
+   this, install with ``make PREFIX=/your/favorite/path install``.  If you know
+   your system lacks support for hardware emulation of FM chips or get a build
+   error to the effect of "sys/io.h missing", invoke ``make`` as
+   ``CFLAGS=-DDISABLE_HW_SUPPORT make``.
+5. Play music
 
 Usage
 =====
@@ -38,11 +39,10 @@ Supported File Types
 * .VGM: Video Game Music
 * .VGZ: Video Game Music (Compressed)
 * .CMF: Creative Music File
-* .DRO: DOSBox Raw OPL  
-
+* .DRO: DOSBox Raw OPL
 * .M3U: Playlist containing the above
 * .ZIP, .7Z: Release packs from mdscene.net, Project2612, etc. containing a
-set of supported music files and a playlist referencing them.  
+  set of supported music files and a playlist referencing them.
 
 Release pack support requires a method of extracting Zip/7z; this launcher
 supports:
