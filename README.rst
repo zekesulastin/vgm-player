@@ -3,30 +3,17 @@ vgm-player
 ==========
 
 A Linux launcher script for ``vgmplay``, the official and always up-to-date
-VGM player (also some manpages and a new Makefile)
+VGM player
 
 This is intended to be used alongside the official source for
 ``vgmplay``, available at http://vgm.mdscene.net/forum/viewtopic.php?t=112.
 
-Build
-=====
+Installation
+============
 
-1. Ensure ``zlib``'s development headers are available.
-2. Acquire and extract the source of ``vgmplay`` - if it already has all the
-   files listed here, just build and play.
-3. Place all files from here into ``vgmplay``'s directory; the only overwrite
-   should be the Makefile.
-4. Build and install::
-
-      $ make
-      # make install
-
-   By default, ``vgmplay`` and ``vgm-player`` install into /usr/local; to alter
-   this, install with ``make PREFIX=/your/favorite/path install``.  If you know
-   your system lacks support for hardware emulation of FM chips or get a build
-   error to the effect of "sys/io.h missing", invoke ``make`` as
-   ``CFLAGS=-DDISABLE_HW_SUPPORT make``.
-5. Play music!
+Just put this script somewhere convenient and run - as long as the ``vgmplay``
+binary is in your $PATH or $(pwd), it should automatically detect and use it;
+you can also specify a specific binary in command-line options.
 
 Usage
 =====
@@ -78,23 +65,24 @@ are exclusive:
 Configuration
 ~~~~~~~~~~~~~
 
-``vgmplay`` expects ``vgmplay.ini`` in its working directory; ``vgm-player``
-will look for a custom ``vgmplay.ini`` in the following order and use the
+``vgmplay`` expects ``VGMPlay.ini`` in its working directory; ``vgm-player``
+will look for a custom ``VGMPlay.ini`` in the following order and use the
 first found:
-``$XDG_CONFIG_HOME/vgm-player/vgmplay.ini``,
-``$HOME/.config/vgm-player/vgmplay.ini``,
-``$XDG_CONFIG_DIRS/vgm-player/vgmplay.ini``,
-``/etc/xdg/vgm-player/vgmplay.ini``.
+``$(pwd)/VGMPlay.ini``
+``$XDG_CONFIG_HOME/vgm-player/VGMPlay.ini``,
+``$HOME/.config/vgm-player/VGMPlay.ini``,
+``$XDG_CONFIG_DIRS/vgm-player/VGMPlay.ini``,
+``/etc/xdg/vgm-player/VGMPlay.ini``.
 
 --config=configfile
               Uses specified configuration file; this does not have to be
-              named ``vgmplay.ini``
+              named ``VGMPlay.ini``
 
 --binary=binary
               Uses specified ``vgmplay`` binary
 
 --override=options
-              Overrides options from the [General] section of ``vgmplay.ini``.
+              Overrides options from the [General] section of ``VGMPlay.ini``.
               The list should be quoted and comma-separated, e.g.
               ``--override="SampleRate = 22050,MaxLoops = 0x03"``
 
