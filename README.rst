@@ -65,24 +65,25 @@ are exclusive:
 Configuration
 ~~~~~~~~~~~~~
 
-``vgmplay`` expects ``VGMPlay.ini`` in its working directory; ``vgm-player``
-will look for a custom ``VGMPlay.ini`` in the following order and use the
+``vgmplay`` expects ``vgmplay.ini`` in its working directory; ``vgm-player``
+will look for a custom ``vgmplay.ini`` in the following order and use the
 first found:
-``$(pwd)/VGMPlay.ini``
-``$XDG_CONFIG_HOME/vgm-player/VGMPlay.ini``,
-``$HOME/.config/vgm-player/VGMPlay.ini``,
-``$XDG_CONFIG_DIRS/vgm-player/VGMPlay.ini``,
-``/etc/xdg/vgm-player/VGMPlay.ini``.
+``$(pwd)/vgmplay.ini``
+``$XDG_CONFIG_HOME/vgm-player/vgmplay.ini``,
+``$HOME/.config/vgm-player/vgmplay.ini``,
+``$XDG_CONFIG_DIRS/vgm-player/vgmplay.ini``,
+``/etc/xdg/vgm-player/vgmplay.ini``,
+``/usr/share/vgmplay/vgmplay.ini``.
 
 --config=configfile
               Uses specified configuration file; this does not have to be
-              named ``VGMPlay.ini``
+              named ``vgmplay.ini``
 
 --binary=binary
               Uses specified ``vgmplay`` binary
 
 --override=options
-              Overrides options from the [General] section of ``VGMPlay.ini``.
+              Overrides options from the [General] section of ``vgmplay.ini``.
               The list should be quoted and comma-separated, e.g.
               ``--override="SampleRate = 22050,MaxLoops = 0x03"``
 
