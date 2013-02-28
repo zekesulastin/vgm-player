@@ -82,11 +82,6 @@ first found:
 --binary=binary
               Uses specified ``vgmplay`` binary
 
---override=options
-              Overrides options from the [General] section of ``vgmplay.ini``.
-              The list should be quoted and comma-separated, e.g.
-              ``--override="SampleRate = 22050,MaxLoops = 0x03"``
-
 Supported File Types
 --------------------
 * .VGM: Video Game Music

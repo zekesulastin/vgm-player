@@ -7,9 +7,13 @@
 
 _force_output=
 _pulse_server=      # Used when --pulse-server= is called
-_log=
 _log_path=
+_binary=
+_config=
 _pwd="$(pwd)"
+_ext=
+[ -z "$XDG_CONFIG_HOME" ] && XDG_CONFIG_HOME="$HOME/.config"
+[ -z "$XDG_CONFIG_DIRS" ] && XDG_CONFIG_DIRS="/etc/xdg"
 
 _help () {
 true
@@ -29,24 +33,48 @@ _die () {
         no_log_path )
             _to_stderr 64 "--log-to requires path parameter" ;;
         unknown_option )
-            _to_stderr 64 "unrecognized option '$2'\nTry 'vgm-player --help' for more information."
+            _to_stderr 64 "unrecognized option '$2'\nTry 'vgm-player --help' for more information." ;;
+        no_aoss )
+            _to_stderr 69 "alsa output forced but aoss not found" ;;
+        no_oss )
+            _to_stderr 74 "oss output forced but /dev/dsp unwritable or not present" ;;
+        no_pulse )
+            _to_stderr 69 "pulse output forced but padsp not found" ;;
+        too_many_files )
+            _to_stderr 64 "only one music file should be specified" ;;
+        file_unreadable )
+            _to_stderr 66 "unable to read specified input - does it exist?" ;;
+        invalid_format )
+            _to_stderr 66 "format unsupported" ;;
+        invalid_binary )
+            _to_stderr 69 "invalid binary specified" ;;
+        no_binary )
+            _to_stderr 64 "--binary requires binary parameter" ;;
+        no_config )
+            _to_stderr 64 "--config requires config parameter" ;;
+        noread_config )
+            _to_stderr 69 "specified config unreadable - does it exist?" ;;
+        invalid_config )
+            _to_stderr 64 "invalid config specified" ;;
     esac
 }
 
 _force_output () {
     if [ -n $_force_output ] && [ "$1" != "$_force_output" ]; then
 		 _die too_many_outputs
-	fi
+    fi
     _force_output=$1
 
 	case "$_force_output" in
 		alsa )
-			true ;;
-	esac
-}
-
-_xdg_basedirs () {
-	[ -z "$XDG_CONFIG_HOME" ] && XDG_CONFIG_HOME="$HOME/.config"
+            command -V aoss 2>&1 >/dev/null || _die no_aoss ;;
+        oss )
+            [ -w /dev/dsp ] || _die no_oss ;;
+        pulse )
+            command -V padsp 2>&1 >/dev/null || _die no_pulse ;;
+        * )
+            break ;; # The log_path checks will be done last
+    esac
 }
 
 # Parse command line options
@@ -93,19 +121,33 @@ while :; do
             [ -n "$_log_path" ] || _die no_log_path
             shift ;;
         --config=* )
+            _config="${1#*=}"
+            [ -n "$_config" ] || _die no_binary
+            [ -r "$_config" ] || _die noread_config
+            file "$_config" | grep -q "ASCII" || _die invalid_config
 			shift ;;
         --binary=* )
-            shift ;;
-        --override=* )
+            _binary="${1#*=}"
+            [ -n "$_binary"] || _die no_binary
+            if [ ! -x "$_binary" ] || [ ! "${binary##*/}" = "vgmplay" ]; then
+                die _invalid_binary
+            fi
             shift ;;
         -* )
             _die unknown_option "$1" ;;
         -- )
-            shift
-            break ;;
+            shift ;;
         "" )
             _die no_music_file ;;
         * )
+            [ -z "$2" ] || _die too_many_files
+            _ext="$(echo ${1##*.} | tr [:upper:] [:lower:])"
+            case $_ext in
+                vgm | vgz | cmf | dro | m3u | zip | 7z )
+                    [ -r "$1" ] || _die file_unreadable ;;
+                * )
+                    _die invalid_format
+            esac
             break ;;
     esac
 done
@@ -115,3 +157,6 @@ done
 #	Does the music file have a valid extension?
 #	If a compressed pack, does a suitable unpacker exist?
 
+if [
+if [ ! -x "$_pwd/vgmplay" ]; then
+    command -V vgmplay 2>&1dd >/dev/null || _die
