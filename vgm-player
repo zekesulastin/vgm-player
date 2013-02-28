@@ -6,6 +6,7 @@
 #   Can't open release packs - plays from temporary directories
 
 _force_output=
+_output=
 _pulse_server=      # Used when --pulse-server= is called
 _log_path=
 _binary=
@@ -72,11 +73,13 @@ _force_output () {
 
     case "$_force_output" in
         alsa )
-            command -V aoss 2>&1 >/dev/null || _die no_aoss ;;
+            _output="$(command -v aoss 2>/dev/null)"
+            [ -n "$_output" ] || _die no_aoss ;;
         oss )
             [ -w /dev/dsp ] || _die no_oss ;;
         pulse )
-            command -V padsp 2>&1 >/dev/null || _die no_pulse ;;
+            _output="$(command -v padsp 2>/dev/null)"
+            [ -n "$_output" ] || _die no_pulse ;;
         * )
             break ;; # The log_path checks will be done last
     esac
@@ -165,14 +168,15 @@ if [ "$_binary" ]; then
 elif [ -x "$_pwd/vgmplay" ]; then
     _binary="$_pwd/vgmplay"
 else
-    command -V vgmplay 2>&1 >/dev/null || _die vgmplay_not_found
+    _binary="$(command -v vgmplay 2>/dev/null)"
 fi
+[ -n "$_binary" ] || _die vgmplay_not_found
 
 #	If a compressed pack, does a suitable unpacker exist?
 case $_ext in
     zip )
         for i in bsdtar 7za unzip; do
-            if command -V $i 2>&1 >/dev/null; then
+            if command -v $i 2>&1 >/dev/null; then
                 case $i in
                     bsdtar )
                         _unpacker="bsdtar -xf" ;;
@@ -187,7 +191,7 @@ case $_ext in
         [ -n "$_unpacker" ] || _die no_unpacker ;;
     7z )
         for i in 7za 7zr bsdtar; do
-            if command -V $i 2>&1 >/dev/null; then
+            if command -v $i 2>&1 >/dev/null; then
                 case $i in
                     7za )
                         _unpacker="7za x" ;;
