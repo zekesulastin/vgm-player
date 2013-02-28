@@ -29,8 +29,8 @@ _die () {
     case $1 in
         too_many_outputs )
             _to_stderr 64 "can only force one output type" ;;
-		no_pulse_server )
-			_to_stderr 64 "--pulse-server requires server parameter" ;;
+        no_pulse_server )
+            _to_stderr 64 "--pulse-server requires server parameter" ;;
         no_log_path )
             _to_stderr 64 "--log-to requires path parameter" ;;
         unknown_option )
@@ -57,19 +57,21 @@ _die () {
             _to_stderr 69 "specified config unreadable - does it exist?" ;;
         invalid_config )
             _to_stderr 64 "invalid config specified" ;;
-		vgmplay_not_found )
-			_to_stderr 69 "vgmplay binary not found" ;;
+        vgmplay_not_found )
+            _to_stderr 69 "vgmplay binary not found" ;;
+        no_unpacker )
+            _to_stderr 69 "no suitable unpacker found" ;;
     esac
 }
 
 _force_output () {
     if [ -n $_force_output ] && [ "$1" != "$_force_output" ]; then
-		 _die too_many_outputs
+        _die too_many_outputs
     fi
     _force_output=$1
 
-	case "$_force_output" in
-		alsa )
+    case "$_force_output" in
+        alsa )
             command -V aoss 2>&1 >/dev/null || _die no_aoss ;;
         oss )
             [ -w /dev/dsp ] || _die no_oss ;;
@@ -91,15 +93,15 @@ while :; do
             exit 0 ;;
         -a | --alsa )
             _force_output alsa
-			shift ;;
+            shift ;;
         -o | --oss )
             _force_output oss
-			shift ;;
+            shift ;;
         -p | --pulse )
             _force_output pulse
-			shift ;;
-		-a* | -o* | -p* | -l* )
-			_die too_many_outputs ;;
+            shift ;;
+        -a* | -o* | -p* | -l* )
+            _die too_many_outputs ;;
         --pulse-server=* )
             _force_output pulse
             _pulse_server="${1#*=}"
@@ -115,7 +117,7 @@ while :; do
             _pulse_server="$2"
             shift 2 ;;
         -l | --log )
-			_force_output log
+            _force_output log
             _log_path="$_pwd"
             shift ;;
         --log-to=* )
@@ -128,7 +130,7 @@ while :; do
             [ -n "$_config" ] || _die no_binary
             [ -r "$_config" ] || _die noread_config
             file "$_config" | grep -q "ASCII" || _die invalid_config
-			shift ;;
+            shift ;;
         --binary=* )
             _binary="${1#*=}"
             [ -n "$_binary"] || _die no_binary
@@ -157,26 +159,51 @@ done
 
 # Sanity checks:
 #	Does `vgmplay` exist if --binary not specified?
-#	If a compressed pack, does a suitable unpacker exist?
-
+#   Prefers vgmplay in working dir over any others
 if [ "$_binary" ]; then
-	break
-elif [ ! -x "$_pwd/vgmplay" ]; then
+    break
+elif [ -x "$_pwd/vgmplay" ]; then
+    _binary="$_pwd/vgmplay"
+else
     command -V vgmplay 2>&1 >/dev/null || _die vgmplay_not_found
 fi
 
-if [ $_ext = "zip" ] then
-	for i in bsdtar 7za unzip do
-		if command -V $i 2>&1 >/dev/null; then
-			case $i in
-				bsdtar )
-					_unpacker="bsdtar -xf" ;;
-				7za )
-					_unpacker="7za x" ;;
-				unzip)
-					_unpacker="unzip" ;;
-			esac
-		fi
-	done
-fi
+#	If a compressed pack, does a suitable unpacker exist?
+case $_ext in
+    zip )
+        for i in bsdtar 7za unzip; do
+            if command -V $i 2>&1 >/dev/null; then
+                case $i in
+                    bsdtar )
+                        _unpacker="bsdtar -xf" ;;
+                    7za )
+                        _unpacker="7za x" ;;
+                    unzip)
+                        _unpacker="unzip" ;;
+                esac
+            fi
+        [ -n "$_unpacker" ] && break
+        done
+        [ -n "$_unpacker" ] || _die no_unpacker ;;
+    7z )
+        for i in 7za 7zr bsdtar; do
+            if command -V $i 2>&1 >/dev/null; then
+                case $i in
+                    7za )
+                        _unpacker="7za x" ;;
+                    7zr )
+                        _unpacker="7zr x" ;;
+                    bsdtar ) #bsdtar cannot handle `solid` 7z files
+                        _unpacker="bsdtar -xf" ;;
+                esac
+            fi
+        [ -n "$_unpacker" ] && break
+        done
+        [ -n "$_unpacker" ] || _die no_unpacker ;;
+    vgm | vgz | cmf | dro | m3u )
+        break ;;
+    * )
+        _die invalid_format ;;
+esac
 
+# vim:ts=4:sw=4:et
