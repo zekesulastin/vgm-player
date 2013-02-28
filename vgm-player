@@ -10,6 +10,7 @@ _pulse_server=      # Used when --pulse-server= is called
 _log_path=
 _binary=
 _config=
+_unpacker=
 _pwd="$(pwd)"
 _ext=
 [ -z "$XDG_CONFIG_HOME" ] && XDG_CONFIG_HOME="$HOME/.config"
@@ -56,6 +57,8 @@ _die () {
             _to_stderr 69 "specified config unreadable - does it exist?" ;;
         invalid_config )
             _to_stderr 64 "invalid config specified" ;;
+		vgmplay_not_found )
+			_to_stderr 69 "vgmplay binary not found" ;;
     esac
 }
 
@@ -154,9 +157,26 @@ done
 
 # Sanity checks:
 #	Does `vgmplay` exist if --binary not specified?
-#	Does the music file have a valid extension?
 #	If a compressed pack, does a suitable unpacker exist?
 
-if [
-if [ ! -x "$_pwd/vgmplay" ]; then
-    command -V vgmplay 2>&1dd >/dev/null || _die
+if [ "$_binary" ]; then
+	break
+elif [ ! -x "$_pwd/vgmplay" ]; then
+    command -V vgmplay 2>&1 >/dev/null || _die vgmplay_not_found
+fi
+
+if [ $_ext = "zip" ] then
+	for i in bsdtar 7za unzip do
+		if command -V $i 2>&1 >/dev/null; then
+			case $i in
+				bsdtar )
+					_unpacker="bsdtar -xf" ;;
+				7za )
+					_unpacker="7za x" ;;
+				unzip)
+					_unpacker="unzip" ;;
+			esac
+		fi
+	done
+fi
+
