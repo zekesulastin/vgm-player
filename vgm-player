@@ -5,7 +5,7 @@
 #   Config must be in working dir - automatically cd/mktemps as needed
 #   Can't open release packs - plays from temporary directories
 
-_force_output=
+_set_output=
 _output=
 _pulse_server=      # Used when --pulse-server= is called
 _log_path=
@@ -14,8 +14,13 @@ _config=
 _unpacker=
 _pwd="$(pwd)"
 _ext=
+_unpacker=
+_tmpdir=
+_music_file=
 [ -z "$XDG_CONFIG_HOME" ] && XDG_CONFIG_HOME="$HOME/.config"
 [ -z "$XDG_CONFIG_DIRS" ] && XDG_CONFIG_DIRS="/etc/xdg"
+_padsp="$(command -v padsp 2>/dev/null)"
+_aoss="$(command -v aoss 2>/dev/null)"
 
 _help () {
 true
@@ -65,24 +70,23 @@ _die () {
     esac
 }
 
-_force_output () {
-    if [ -n $_force_output ] && [ "$1" != "$_force_output" ]; then
+_set_output () {
+    if [ -n $_set_output ] && [ "$1" != "$_set_output" ]; then
         _die too_many_outputs
     fi
-    _force_output=$1
+    _set_output=$1
 
-    case "$_force_output" in
+    case "$_set_output" in
         alsa )
-            _output="$(command -v aoss 2>/dev/null)"
-            [ -n "$_output" ] || _die no_aoss ;;
+            [ -x "$_aoss" ] || _die no_aoss ;;
         oss )
             [ -w /dev/dsp ] || _die no_oss ;;
         pulse )
-            _output="$(command -v padsp 2>/dev/null)"
-            [ -n "$_output" ] || _die no_pulse ;;
+            [ -n "$_padsp" ] || _die no_pulse ;;
         * )
-            break ;; # The log_path checks will be done last
+            break ;;
     esac
+    [ -n "$_pulse_server" ] && _set_output=pulse-server
 }
 
 # Parse command line options
@@ -95,38 +99,38 @@ while :; do
             echo "VGMPlay 0.40.3 supporting VGM 1.70"
             exit 0 ;;
         -a | --alsa )
-            _force_output alsa
+            _set_output alsa
             shift ;;
         -o | --oss )
-            _force_output oss
+            _set_output oss
             shift ;;
         -p | --pulse )
-            _force_output pulse
+            _set_output pulse
             shift ;;
         -a* | -o* | -p* | -l* )
             _die too_many_outputs ;;
         --pulse-server=* )
-            _force_output pulse
+            _set_output pulse
             _pulse_server="${1#*=}"
             [ -n "$_pulse_server" ] || _die no_pulse_server
             shift ;;
         -s* )
-            _force_output pulse
+            _set_output pulse
             _pulse_server="${1#-s}"
             [ -n "$_pulse_server" ] || _die no_pulse_server
             shift ;;
         -s )
-            _force_output pulse
+            _set_output pulse
             _pulse_server="$2"
             shift 2 ;;
         -l | --log )
-            _force_output log
+            _set_output log
             _log_path="$_pwd"
             shift ;;
         --log-to=* )
-            _force_output log
+            _set_output log
             _log_path="${1#*=}"
-            [ -n "$_log_path" ] || _die no_log_path
+            [ -d "$_log_path" ] || _die no_log_path
             shift ;;
         --config=* )
             _config="${1#*=}"
@@ -152,7 +156,8 @@ while :; do
             _ext="$(echo ${1##*.} | tr [:upper:] [:lower:])"
             case $_ext in
                 vgm | vgz | cmf | dro | m3u | zip | 7z )
-                    [ -r "$1" ] || _die file_unreadable ;;
+                    [ -r "$1" ] || _die file_unreadable
+                    _music_file="$1";;
                 * )
                     _die invalid_format
             esac
@@ -161,9 +166,9 @@ while :; do
 done
 
 # Sanity checks:
-#	Does `vgmplay` exist if --binary not specified?
+#   Does `vgmplay` exist if --binary not specified?
 #   Prefers vgmplay in working dir over any others
-if [ "$_binary" ]; then
+if [ -n "$_binary" ]; then
     break
 elif [ -x "$_pwd/vgmplay" ]; then
     _binary="$_pwd/vgmplay"
@@ -172,36 +177,30 @@ else
 fi
 [ -n "$_binary" ] || _die vgmplay_not_found
 
-#	If a compressed pack, does a suitable unpacker exist?
+#   If a compressed pack, does a suitable unpacker exist?
 case $_ext in
     zip )
         for i in bsdtar 7za unzip; do
-            if command -v $i 2>&1 >/dev/null; then
-                case $i in
-                    bsdtar )
-                        _unpacker="bsdtar -xf" ;;
-                    7za )
-                        _unpacker="7za x" ;;
-                    unzip)
-                        _unpacker="unzip" ;;
-                esac
-            fi
-        [ -n "$_unpacker" ] && break
+            _unpacker="$(command -v $i 2>/dev/null)"
+            case "$_unpacker" in
+                *bsdtar )
+                    _unpacker="$_unpacker -xf" ;;
+                *7za )
+                    _unpacker="$_unpacker x" ;;
+                *unzip)
+                    _unpacker="$_unpacker" ;;
+            esac
         done
         [ -n "$_unpacker" ] || _die no_unpacker ;;
     7z )
+        _unpacker="$(command -v $i 2>/dev/null)"
         for i in 7za 7zr bsdtar; do
-            if command -v $i 2>&1 >/dev/null; then
-                case $i in
-                    7za )
-                        _unpacker="7za x" ;;
-                    7zr )
-                        _unpacker="7zr x" ;;
-                    bsdtar ) #bsdtar cannot handle `solid` 7z files
-                        _unpacker="bsdtar -xf" ;;
-                esac
-            fi
-        [ -n "$_unpacker" ] && break
+            case "$_unpacker" in
+                *7za | *7zr )
+                    _unpacker="$_unpacker x" ;;
+                *bsdtar ) #bsdtar cannot handle `solid` 7z files
+                    _unpacker="$_unpacker -xf" ;;
+            esac
         done
         [ -n "$_unpacker" ] || _die no_unpacker ;;
     vgm | vgz | cmf | dro | m3u )
@@ -210,4 +209,66 @@ case $_ext in
         _die invalid_format ;;
 esac
 
+# Select config
+if [ -r "$_config" ]; then
+    break
+else
+    for i in "$_pwd" "$XDG_CONFIG_HOME/vgmplay" "$HOME/.config/vgmplay" "$XDG_CONFIG_DIRS/vgmplay" "/etc/xdg/vgmplay" "/usr/local/share/vgmplay" "/usr/share/vgmplay"; do
+        _config="$i/vgmplay.ini"
+        [ -r "$_config"] && break
+    done
+fi
+# vgmplay will function without a config, but will warn the user thus from inside the program
+
+# Make temporary working directory for vgmplay
+# Logdir availability checked here ...
+#   Uses $XDG_RUNTIME_DIR, $TMPDIR, /tmp
+#   Uses mktemp program for my sanity's sake
+#   Assumes user isn't going to try to log into a directory w/ a preexisting vgmplay.ini
+#       Seriously, if you're going to do that why would you use this helper to start with
+if [ -d "$_log_path" ]; then
+    sed "s/LogPath.*/LogPath = 1/" < "$_config" > "$_log_path/vgmplay.ini" || _die log_path_nowrite
+    _tmpdir="$_log_path/vgmplay.ini" #so it gets cleaned by our trap
+elif [ -n "$XDG_RUNTIME_DIR" ]; then
+    _tmpdir="$(mktemp -d --tmpdir="$XDG_RUNTIME_DIR")" || _die tmpdir_fail
+    cp "$_config" "$_tmpdir/vgmplay.ini" || _die tmpdir_fail
+else #mktemp defaults to tmpdir then /tmp!
+    _tmpdir="$(mktemp -d)" || _die tmpdir_fail
+    cp "$_config" "$_tmpdir/vgmplay.ini" || _die tmpdir_fail
+fi
+
+# Determine output to use if not forced
+# PULSE_SERVER, oss, padsp, aoss, log set, error
+if [ -z $_set_output ]; then
+    break
+elif [ -n "$PULSE_SERVER" ] && [ -x "$_padsp" ]; then
+    _set_output="pulse-server"
+elif [ -w /dev/dsp ]; then
+    _set_output="oss"
+elif [ -x "$_padsp" ]; then
+    _set_output="pulse"
+elif [ -x "$_aoss" ]; then
+    _set_output="alsa"
+elif [ -n "$_log_path" ]; then
+    _set_output="log"
+else
+    _die no_output
+fi
+
+# Extract packs to tmpdir.
+# TODO: clean up packs extracted to log_path
+# Official VGM packs have dir format Game_Name.zip:Game Name/files
+if [ -n "$_unpacker" ]; then
+    (   [ -d "$_log_path" ] && cd "$_log_path" || cd "$_tmpdir"
+        $_unpacker $_music_file
+        rm ${_music_file##*/}   )
+fi
+
+# Plays back song with specified everything
+case $_set_output in
+    log )
+        (   cd "$_log_path"
+            "$_binary" "$_music_file"
+        ) ;;
+esac
 # vim:ts=4:sw=4:et

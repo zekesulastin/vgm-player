@@ -69,10 +69,10 @@ Configuration
 will look for a custom ``vgmplay.ini`` in the following order and use the
 first found:
 ``$(pwd)/vgmplay.ini``
-``$XDG_CONFIG_HOME/vgm-player/vgmplay.ini``,
-``$HOME/.config/vgm-player/vgmplay.ini``,
-``$XDG_CONFIG_DIRS/vgm-player/vgmplay.ini``,
-``/etc/xdg/vgm-player/vgmplay.ini``,
+``$XDG_CONFIG_HOME/vgmplay/vgmplay.ini``,
+``$HOME/.config/vgmplay/vgmplay.ini``,
+``$XDG_CONFIG_DIRS/vgmplay/vgmplay.ini``,
+``/etc/xdg/vgmplay/vgmplay.ini``,
 ``/usr/share/vgmplay/vgmplay.ini``.
 
 --config=configfile
