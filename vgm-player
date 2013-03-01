@@ -286,19 +286,19 @@ fi
 # Also sets pulse-server if detected
 # PULSE_SERVER, oss, padsp, aoss, log set, error
 if [ -n $_set_output ]; then
-    break
-elif [ -n "$PULSE_SERVER" ] && [ -x "$_padsp" ]; then
-    _set_output="pulse-server"
-elif [ -w /dev/dsp ]; then
-    _set_output="oss"
-elif [ -x "$_padsp" ] && command pulseaudio --check ; then
-    _set_output="pulse"
-elif [ -x "$_aoss" ]; then
-    _set_output="alsa"
-elif [ -n "$_log_path" ]; then
-    _set_output="log"
-else
-    _die no_output
+    if [ -n "$PULSE_SERVER" ] && [ -x "$_padsp" ]; then
+        _set_output="pulse-server"
+    elif [ -w /dev/dsp ]; then
+        _set_output="oss"
+    elif [ -x "$_padsp" ] && command pulseaudio --check ; then
+        _set_output="pulse"
+    elif [ -x "$_aoss" ]; then
+        _set_output="alsa"
+    elif [ -n "$_log_path" ]; then
+        _set_output="log"
+    else
+        _die no_output
+    fi
 fi
 [ -n "$_pulse_server" ] && _set_output=pulse-server
 # Extract packs to tmpdir.
@@ -332,7 +332,7 @@ case $_set_output in
         [ -n "$_music_stub" ] && rm -rf "$_log_path/$_music_stub"
         rm "$_log_path/vgmplay.ini" ;;
     pulse-server )
-        _pulse_server="${_pulse_server:-$_PULSE_SERVER}"
+        _pulse_server="${_pulse_server:-$PULSE_SERVER}"
         (   cd "$_tmpdir"
             exec "$_padsp" -s "$_pulse_server" -n "VGM Player" -m "OSS Emulation (from $_pulse_server)" "$_binary" "$_music_file"
         )
