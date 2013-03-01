@@ -59,7 +59,7 @@ are exclusive:
 
 -l, --log     Outputs to .WAV in current directory.
 
---log-to=path
+--log-path=path
               Outputs to .WAV in specified path.
 
 Configuration
