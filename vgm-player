@@ -5,8 +5,8 @@
 #   Config must be in working dir - automatically cd/mktemps as needed
 #   Can't open release packs - plays from temporary directories
 
-trap '[ -n "$_tmpdir" ] && rm -rf "$_tmpdir"; [ -w "$_log_path/vgmplay.ini" && rm "$_log_path/vgmplay.ini"' EXIT
-trap '[ -n "$_tmpdir" ] && rm -rf "$_tmpdir"; [ -w "$_log_path/vgmplay.ini" && rm "$_log_path/vgmplay.ini"; reset' HUP INT QUIT TERM SEGV
+trap '[ -n "$_tmpdir" ] && rm -rf "$_tmpdir"; [ -w "$_log_path/vgmplay.ini" ] && rm "$_log_path/vgmplay.ini"' EXIT
+trap '[ -n "$_tmpdir" ] && rm -rf "$_tmpdir"; [ -w "$_log_path/vgmplay.ini" ] && rm "$_log_path/vgmplay.ini"; reset' HUP INT QUIT TERM SEGV
 
 _set_output=
 _output=
@@ -160,7 +160,7 @@ while :; do
         -s* )
             _set_output pulse
             _pulse_server="${1#-s}"
-            if [ -z "$_pulse_server"]; then
+            if [ -z "$_pulse_server" ]; then
                 _pulse_server="$2"
                 shift
             fi
