@@ -5,6 +5,9 @@
 #   Config must be in working dir - automatically cd/mktemps as needed
 #   Can't open release packs - plays from temporary directories
 
+trap '[ -n "$_tmpdir" ] && rm -rf "$_tmpdir"; [ -w "$_log_path/vgmplay.ini" && rm "$_log_path/vgmplay.ini"' EXIT
+trap '[ -n "$_tmpdir" ] && rm -rf "$_tmpdir"; [ -w "$_log_path/vgmplay.ini" && rm "$_log_path/vgmplay.ini"; reset' HUP INT QUIT TERM SEGV
+
 _set_output=
 _output=
 _pulse_server=      # Used when --pulse-server= is called
