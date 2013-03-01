@@ -17,6 +17,7 @@ _ext=
 _unpacker=
 _tmpdir=
 _music_file=
+_music_dir=
 [ -z "$XDG_CONFIG_HOME" ] && XDG_CONFIG_HOME="$HOME/.config"
 [ -z "$XDG_CONFIG_DIRS" ] && XDG_CONFIG_DIRS="/etc/xdg"
 _padsp="$(command -v padsp 2>/dev/null)"
@@ -39,6 +40,10 @@ Options:
                             set alternate PulseAudio server (implies --padsp)
  -l,    --log               outputs to wav files in current directory
         --log-path=<path>   outputs to wav files in <path> (implies --log)
+
+ WARNING: If you plan to log using this script, use --log or --logpath!
+  Do NOT set logging on in a custom config, else the script logic will
+  remove your logs!
 
         --binary=<binary>   use alternate vgmplay binary
         --config=<config>   use alternate configuration file
@@ -97,6 +102,12 @@ _die () {
             _to_stderr 69 "vgmplay binary not found" ;;
         no_unpacker )
             _to_stderr 69 "no suitable unpacker found" ;;
+        tmpdir_failed )
+            _to_stderr 70 "unable to create/use temporary working directory" ;;
+        no_output )
+            _to_stderr 69 "no usable otuput detected" ;;
+        log_path_nowrite )
+            _to_stderr 73 "log path unwriteable" ;;
     esac
 }
 
@@ -116,7 +127,6 @@ _set_output () {
         * )
             break ;;
     esac
-    [ -n "$_pulse_server" ] && _set_output=pulse-server
 }
 
 # Parse command line options
@@ -275,7 +285,7 @@ elif [ -n "$PULSE_SERVER" ] && [ -x "$_padsp" ]; then
     _set_output="pulse-server"
 elif [ -w /dev/dsp ]; then
     _set_output="oss"
-elif [ -x "$_padsp" ]; then
+elif [ -x "$_padsp" ] && command pulseaudio --check ; then
     _set_output="pulse"
 elif [ -x "$_aoss" ]; then
     _set_output="alsa"
@@ -289,9 +299,19 @@ fi
 # TODO: clean up packs extracted to log_path
 # Official VGM packs have dir format Game_Name.zip:Game Name/files
 if [ -n "$_unpacker" ]; then
-    (   [ -d "$_log_path" ] && cd "$_log_path" || cd "$_tmpdir"
-        $_unpacker $_music_file
-        rm ${_music_file##*/}   )
+    if [ "$_set_output" = log]; then
+        (   [ -d "$_log_path" ] && cd "$_log_path" || _die log_path_nowrite
+            $_unpacker "$_music_file"
+            rm "${_music_file##*/}"   )
+        _music_stub="$(echo "${_music_file##*/}" | tr "_" " ")"
+        _music_file="$_log_path/$_music_stub/${_music_stub}.m3u"
+    else
+        (   [ -d "$_tmpdir" ] && cd "$_tmpdir" || _die tmpdir_failed
+            $_unpacker "$_music_file"
+            rm "${_music_file##*/}" )
+        _music_stub="$(echo "${_music_file##*/}" | tr "_" " ")"
+        _music_file="$_tmpdir/$_music_stub/${_music_stub}.m3u"
+
 fi
 
 # Plays back song with specified everything
@@ -299,6 +319,28 @@ case $_set_output in
     log )
         (   cd "$_log_path"
             "$_binary" "$_music_file"
-        ) ;;
+        )
+        rm "$_log_path/vgmplay.ini";;
+    pulse-server )
+        _pulse_server="${_pulse_server:-$_PULSE_SERVER}"
+        (   cd "$_tmpdir"
+            exec "$_padsp" -n "VGM Player" -m "OSS Emulation (from $_pulse_server)" "$_binary" "$_music_file"
+        )
+        rm -rf "$_tmpdir"
+    pulse )
+        (   cd "$_tmpdir"
+            exec "$_padsp" -n "VGM Player" -m "OSS Emulation" "$_binary" "$_music_file"
+        )
+        rm -rf "$_tmpdir"
+    alsa )
+        (   cd "$_tmpdir"
+            exec "$_aoss" "$_binary" "$_music_file"
+        )
+        rm -rf "$_tmpdir"
+    oss )
+        (   cd "$_tmpdir"
+            exec "$_binary" "$_music_file"
+        )
+        rm -rf "$_tmpdir"
 esac
 # vim:ts=4:sw=4:et
