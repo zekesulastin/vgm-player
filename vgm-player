@@ -230,6 +230,7 @@ case $_ext in
                 *unzip)
                     _unpacker="$_unpacker" ;;
             esac
+            [ -n $_unpacker ] && break
         done
         [ -n "$_unpacker" ] || _die no_unpacker ;;
     7z )
@@ -241,6 +242,7 @@ case $_ext in
                 *bsdtar ) #bsdtar cannot handle `solid` 7z files
                     _unpacker="$_unpacker -xf" ;;
             esac
+            [ -n $_unpacker ] && break
         done
         [ -n "$_unpacker" ] || _die no_unpacker ;;
     vgm | vgz | cmf | dro | m3u )
