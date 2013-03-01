@@ -112,10 +112,10 @@ _die () {
 }
 
 _set_output () {
-    if [ -n $_set_output ] && [ "$1" != "$_set_output" ]; then
+    _set_output=$1
+    if [ -n $_set_output ] && [ ! "$1" = $_set_output ]; then
         _die too_many_outputs
     fi
-    _set_output=$1
 
     case "$_set_output" in
         alsa )
@@ -157,12 +157,12 @@ while :; do
         -s* )
             _set_output pulse
             _pulse_server="${1#-s}"
+            if [ -z "$_pulse_server"]; then
+                _pulse_server="$2"
+                shift
+            fi
             [ -n "$_pulse_server" ] || _die no_pulse_server
             shift ;;
-        -s )
-            _set_output pulse
-            _pulse_server="$2"
-            shift 2 ;;
         -l | --log )
             _set_output log
             _log_path="$_pwd"
@@ -255,7 +255,7 @@ if [ -r "$_config" ]; then
 else
     for i in "$_pwd" "$XDG_CONFIG_HOME/vgmplay" "$HOME/.config/vgmplay" "$XDG_CONFIG_DIRS/vgmplay" "/etc/xdg/vgmplay" "/usr/local/share/vgmplay" "/usr/share/vgmplay"; do
         _config="$i/vgmplay.ini"
-        [ -r "$_config"] && break
+        [ -r "$_config" ] && break
     done
 fi
 # vgmplay will function without a config, but will warn the user thus from inside the program
@@ -278,8 +278,9 @@ else #mktemp defaults to tmpdir then /tmp!
 fi
 
 # Determine output to use if not forced
+# Also sets pulse-server if detected
 # PULSE_SERVER, oss, padsp, aoss, log set, error
-if [ -z $_set_output ]; then
+if [ -n $_set_output ]; then
     break
 elif [ -n "$PULSE_SERVER" ] && [ -x "$_padsp" ]; then
     _set_output="pulse-server"
@@ -294,24 +295,25 @@ elif [ -n "$_log_path" ]; then
 else
     _die no_output
 fi
-
+[ -n "$_pulse_server" ] && _set_output=pulse-server
 # Extract packs to tmpdir.
 # TODO: clean up packs extracted to log_path
 # Official VGM packs have dir format Game_Name.zip:Game Name/files
 if [ -n "$_unpacker" ]; then
-    if [ "$_set_output" = log]; then
+    if [ "$_set_output" = log ]; then
         (   [ -d "$_log_path" ] && cd "$_log_path" || _die log_path_nowrite
-            $_unpacker "$_music_file"
-            rm "${_music_file##*/}"   )
+            $_unpacker "$_music_file" >/dev/null
+        )
         _music_stub="$(echo "${_music_file##*/}" | tr "_" " ")"
         _music_file="$_log_path/$_music_stub/${_music_stub}.m3u"
     else
         (   [ -d "$_tmpdir" ] && cd "$_tmpdir" || _die tmpdir_failed
-            $_unpacker "$_music_file"
-            rm "${_music_file##*/}" )
-        _music_stub="$(echo "${_music_file##*/}" | tr "_" " ")"
+            $_unpacker "$_music_file" >/dev/null
+        )
+        _music_stub="${_music_file%.*}"
+        _music_stub="$(echo "${_music_stub##*/}" | tr "_" " ")"
         _music_file="$_tmpdir/$_music_stub/${_music_stub}.m3u"
-
+    fi
 fi
 
 # Plays back song with specified everything
@@ -324,23 +326,23 @@ case $_set_output in
     pulse-server )
         _pulse_server="${_pulse_server:-$_PULSE_SERVER}"
         (   cd "$_tmpdir"
-            exec "$_padsp" -n "VGM Player" -m "OSS Emulation (from $_pulse_server)" "$_binary" "$_music_file"
+            exec "$_padsp" -s "$_pulse_server" -n "VGM Player" -m "OSS Emulation (from $_pulse_server)" "$_binary" "$_music_file"
         )
-        rm -rf "$_tmpdir"
+        rm -rf "$_tmpdir" ;;
     pulse )
         (   cd "$_tmpdir"
             exec "$_padsp" -n "VGM Player" -m "OSS Emulation" "$_binary" "$_music_file"
         )
-        rm -rf "$_tmpdir"
+        rm -rf "$_tmpdir" ;;
     alsa )
         (   cd "$_tmpdir"
             exec "$_aoss" "$_binary" "$_music_file"
         )
-        rm -rf "$_tmpdir"
+        rm -rf "$_tmpdir" ;;
     oss )
         (   cd "$_tmpdir"
             exec "$_binary" "$_music_file"
         )
-        rm -rf "$_tmpdir"
+        rm -rf "$_tmpdir" ;;
 esac
 # vim:ts=4:sw=4:et
