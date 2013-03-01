@@ -10,7 +10,7 @@ trap '[ -n "$_tmpdir" ] && rm -rf "$_tmpdir"; [ -w "$_log_path/vgmplay.ini" ] &&
 
 _set_output=
 _output=
-_pulse_server=      # Used when --pulse-server= is called
+_pulse_server=
 _log_path=
 _binary=
 _config=
@@ -21,8 +21,8 @@ _unpacker=
 _tmpdir=
 _music_file=
 _music_stub=
-[ -z "$XDG_CONFIG_HOME" ] && XDG_CONFIG_HOME="$HOME/.config"
-[ -z "$XDG_CONFIG_DIRS" ] && XDG_CONFIG_DIRS="/etc/xdg"
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+XDG_CONFIG_DIRS="${XDG_CONFIG_DIRS:-/etc/xdg}"
 _padsp="$(command -v padsp 2>/dev/null)"
 _aoss="$(command -v aoss 2>/dev/null)"
 
@@ -44,7 +44,7 @@ Options:
  -l,    --log               outputs to wav files in current directory
         --log-path=<path>   outputs to wav files in <path> (implies --log)
 
- WARNING: If you plan to log using this script, use --log or --logpath!
+ WARNING: If you plan to log using this script, use --log or --log-path!
   Do NOT set logging on in a custom config, else the script logic will
   remove your logs!
 
