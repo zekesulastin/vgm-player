@@ -23,7 +23,37 @@ _padsp="$(command -v padsp 2>/dev/null)"
 _aoss="$(command -v aoss 2>/dev/null)"
 
 _help () {
-true
+cat <<EOF
+Usage: vgm-player [options] filename
+Uses vgmplay to play vgm, vgz, cmf, dro, m3u, and 7z/zip'd vgm packs.
+
+Options:
+        --help              display this help and exit
+        --version           display vgmplay and vgm format versions and exit
+
+ -a,    --alsa              force use of aoss (ALSA's OSS wrapper)
+ -o,    --oss               force use of OSS (native OSS, OSSProxy)
+ -p,    --pulse             force use of padsp (PulseAudio's OSS wrapper)
+ -s <server>,
+        --pulse-server=<server>
+                            set alternate PulseAudio server (implies --padsp)
+ -l,    --log               outputs to wav files in current directory
+        --log-path=<path>   outputs to wav files in <path> (implies --log)
+
+        --binary=<binary>   use alternate vgmplay binary
+        --config=<config>   use alternate configuration file
+
+Keys (In-Player):
+ Left/Right                 seek 5 seconds backward/forward
+ Ctrl + Left/Right          seek 60 seconds backward/forward
+ Space                      pause
+ Escape (twice)             quit program
+ F                          fade out current track
+ R                          restart current track
+ PageUp or B                previous track in playlist
+ PageDown or N              next track in playlist
+EOF
+exit 0
 }
 
 _to_stderr () {
