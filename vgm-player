@@ -16,6 +16,7 @@ _binary=
 _config=
 _unpacker=
 _pwd="$(pwd)"
+_host="$(hostname)"
 _ext=
 _unpacker=
 _tmpdir=
@@ -337,7 +338,7 @@ case $_set_output in
     pulse-server )
         _pulse_server="${_pulse_server:-$PULSE_SERVER}"
         (   cd "$_tmpdir"
-            exec "$_padsp" -s "$_pulse_server" -n "VGM Player" -m "OSS Emulation (from $_pulse_server)" "$_binary" "$_music_file"
+            exec "$_padsp" -s "$_pulse_server" -n "VGM Player" -m "OSS Emulation (from $_host)" "$_binary" "$_music_file"
         )
         rm -rf "$_tmpdir" ;;
     pulse )
