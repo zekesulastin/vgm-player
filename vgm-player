@@ -202,9 +202,12 @@ while :; do
                 * )
                     _die invalid_format
             esac
-            if [ "${_music_file%/*}" = "${_music_file}" ]; then
-                _music_file="$_pwd/$_music_file"
-            fi
+            case $_music_file in
+                ~* | /* )
+                    break ;;
+                * )
+                    _music_file="$_pwd/$_music_file" ;;
+            esac
             break ;;
     esac
 done
