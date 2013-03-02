@@ -133,6 +133,14 @@ _set_output () {
     esac
 }
 
+# Set terminal title for xterm/rxvt
+case $TERM in
+    xterm* | rxvt* )
+        printf '%b\n' '\033]2;VGM Player\007' ;;
+    * )
+        ;;
+esac
+
 # Parse command line options
 #   All single-letter options are exclusive
 while :; do
@@ -213,8 +221,7 @@ while :; do
     esac
 done
 
-# Sanity checks:
-#   Does `vgmplay` exist if --binary not specified?
+# Does `vgmplay` exist if --binary not specified?
 #   Prefers vgmplay in working dir over any others
 if [ -n "$_binary" ]; then
     break
@@ -225,7 +232,7 @@ else
 fi
 [ -n "$_binary" ] || _die vgmplay_not_found
 
-#   If a compressed pack, does a suitable unpacker exist?
+# If a compressed pack, does a suitable unpacker exist?
 case $_ext in
     zip )
         for i in bsdtar 7za unzip; do
@@ -305,9 +312,8 @@ if [ -n $_set_output ]; then
     fi
 fi
 [ -n "$_pulse_server" ] && _set_output=pulse-server
+
 # Extract packs to tmpdir.
-# TODO: clean up packs extracted to log_path
-# Official VGM packs have dir format Game_Name.zip:Game Name/files
 if [ -n "$_unpacker" ]; then
     if [ "$_set_output" = log ]; then
         (   [ -d "$_log_path" ] && cd "$_log_path" || _die log_path_nowrite
