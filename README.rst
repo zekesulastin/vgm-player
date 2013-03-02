@@ -53,7 +53,7 @@ are exclusive:
 -p, --pulse   ``padsp`` wrapper for PulseAudio; respects the PULSE_SERVER
               environment variable if set.
 
---pulse-server=server
+-s server, --pulse-server=server
               ``padsp`` wrapper for PulseAudio; forces output to specified
               PulseAudio server.
 
