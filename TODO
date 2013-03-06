@@ -1,12 +1,6 @@
-* Make unpacker FAR more robust:
-	Official VGM releases come in format Game_Name.ext:Game Name/Game Name.m3u
-	Currently the script assumes the above to be exactly true
-	However, the directory within the archive isn't always named the same as the archive
-		e.g. Streets_of_Rage.zip:Streets of Rage (Bare Knuckle)...
-	Maybe use verbose output or similar and grep out the path of the m3u?
+* Support other unzippers again
 
 * Do a logic pass
 	See if there are any parts that can be simplified or rewritten to be more effective
 
 * Try to figure out how to add --override="config options"
-	POSIX sh lacks arrays.  Why doesn't POSIX sh have arrays.  I hate everyone.

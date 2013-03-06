@@ -21,7 +21,7 @@ _ext=
 _unpacker=
 _tmpdir=
 _music_file=
-_music_stub=
+_m3u_stub=
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 XDG_CONFIG_DIRS="${XDG_CONFIG_DIRS:-/etc/xdg}"
 _padsp="$(command -v padsp 2>/dev/null)"
@@ -30,7 +30,7 @@ _aoss="$(command -v aoss 2>/dev/null)"
 _help () {
 cat <<EOF
 Usage: vgm-player [options] filename
-Uses vgmplay to play vgm, vgz, cmf, dro, m3u, and 7z/zip'd vgm packs.
+Uses vgmplay to play vgm, vgz, cmf, dro, m3u, and zip'd vgm packs.
 
 Options:
         --help              display this help and exit
@@ -235,31 +235,7 @@ fi
 # If a compressed pack, does a suitable unpacker exist?
 case $_ext in
     zip )
-        for i in bsdtar 7za unzip; do
-            _unpacker="$(command -v $i 2>/dev/null)"
-            case "$_unpacker" in
-                *bsdtar )
-                    _unpacker="$_unpacker -xf" ;;
-                *7za )
-                    _unpacker="$_unpacker x" ;;
-                *unzip)
-                    _unpacker="$_unpacker" ;;
-            esac
-            [ -n "$_unpacker" ] && break
-        done
-        [ -n "$_unpacker" ] || _die no_unpacker ;;
-    7z )
-        _unpacker="$(command -v $i 2>/dev/null)"
-        for i in 7za 7zr bsdtar; do
-            case "$_unpacker" in
-                *7za | *7zr )
-                    _unpacker="$_unpacker x" ;;
-                *bsdtar ) #bsdtar cannot handle `solid` 7z files
-                    _unpacker="$_unpacker -xf" ;;
-            esac
-            [ -n "$_unpacker" ] && break
-        done
-        [ -n "$_unpacker" ] || _die no_unpacker ;;
+        command -v unzip 2>/dev/null || _die no_unpacker ;;
     vgm | vgz | cmf | dro | m3u )
         break ;;
     * )
@@ -284,13 +260,13 @@ fi
 #   Assumes user isn't going to try to log into a directory w/ a preexisting vgmplay.ini
 #       Seriously, if you're going to do that why would you use this helper to start with
 if [ -d "$_log_path" ]; then
-    sed "s/^LogSound.*/LogSound = 1/" < "$_config" > "$_log_path/vgmplay.ini" || _die log_path_nowrite
+    command sed "s/^LogSound.*/LogSound = 1/" < "$_config" > "$_log_path/vgmplay.ini" || _die log_path_nowrite
 elif [ -n "$XDG_RUNTIME_DIR" ]; then
-    _tmpdir="$(mktemp -d --tmpdir="$XDG_RUNTIME_DIR")" || _die tmpdir_fail
-    cp "$_config" "$_tmpdir/vgmplay.ini" || _die tmpdir_fail
+    _tmpdir="$(command mktemp -d --tmpdir="$XDG_RUNTIME_DIR")" || _die tmpdir_fail
+    command cp "$_config" "$_tmpdir/vgmplay.ini" || _die tmpdir_fail
 else #mktemp defaults to tmpdir then /tmp!
-    _tmpdir="$(mktemp -d)" || _die tmpdir_fail
-    cp "$_config" "$_tmpdir/vgmplay.ini" || _die tmpdir_fail
+    _tmpdir="$(command mktemp -d)" || _die tmpdir_fail
+    command cp "$_config" "$_tmpdir/vgmplay.ini" || _die tmpdir_fail
 fi
 
 # Determine output to use if not forced
@@ -314,21 +290,20 @@ fi
 [ -n "$_pulse_server" ] && _set_output=pulse-server
 
 # Extract packs to tmpdir.
-if [ -n "$_unpacker" ]; then
+if [ $_ext = "zip" ]; then
     if [ "$_set_output" = log ]; then
         (   [ -d "$_log_path" ] && cd "$_log_path" || _die log_path_nowrite
-            $_unpacker "$_music_file" >/dev/null
+            command unzip "$_music_file" >"$_log_path/extractlog"
         )
-        _music_stub="${_music_file%.*}"
-        _music_stub="$(echo "${_music_stub##*/}" | tr "_" " ")"
-        _music_file="$_log_path/$_music_stub/${_music_stub}.m3u"
+        _m3u_stub="$(command grep < "$_log_path/extractlog" m3u | command sed 's/  inflating: \| extracting: //g')"
+        _music_file="$_log_path/${_m3u_stub%%  }"
+        command rm "$_log_path/extractlog"
     else
         (   [ -d "$_tmpdir" ] && cd "$_tmpdir" || _die tmpdir_failed
-            $_unpacker "$_music_file" >/dev/null
+            command unzip "$_music_file" >"$_tmpdir/extractlog"
         )
-        _music_stub="${_music_file%.*}"
-        _music_stub="$(echo "${_music_stub##*/}" | tr "_" " ")"
-        _music_file="$_tmpdir/$_music_stub/${_music_stub}.m3u"
+        _m3u_stub="$(command grep < "$_tmpdir/extractlog" m3u | command sed 's/  inflating: \| extracting: //g')"
+        _music_file="$_tmpdir/${_m3u_stub%%  }"
     fi
 fi
 
@@ -338,29 +313,24 @@ case $_set_output in
         (   cd "$_log_path"
             "$_binary" "$_music_file"
         )
-        mv "${_music_file%/*}/"*.wav "${_log_path}"
-        [ -n "$_music_stub" ] && rm -rf "$_log_path/$_music_stub"
-        rm "$_log_path/vgmplay.ini" ;;
+        command mv "${_music_file%/*}/"*.wav "${_log_path}"
+        [ -n "$_music_stub" ] && rm -rf "$_log_path/$_music_stub" ;;
     pulse-server )
         _pulse_server="${_pulse_server:-$PULSE_SERVER}"
         (   cd "$_tmpdir"
             exec "$_padsp" -s "$_pulse_server" -n "VGM Player" -m "OSS Emulation (from $_host)" "$_binary" "$_music_file"
-        )
-        rm -rf "$_tmpdir" ;;
+        ) ;;
     pulse )
         (   cd "$_tmpdir"
             exec "$_padsp" -n "VGM Player" -m "OSS Emulation" "$_binary" "$_music_file"
-        )
-        rm -rf "$_tmpdir" ;;
+        ) ;;
     alsa )
         (   cd "$_tmpdir"
             exec "$_aoss" "$_binary" "$_music_file"
-        )
-        rm -rf "$_tmpdir" ;;
+        ) ;;
     oss )
         (   cd "$_tmpdir"
             exec "$_binary" "$_music_file"
-        )
-        rm -rf "$_tmpdir" ;;
+        ) ;;
 esac
 # vim:ts=4:sw=4:et
